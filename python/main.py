@@ -80,19 +80,36 @@ def resolution2(clauses):       #[{B}, {~D}, {D, B}, {~A, B}, {~A}, {~D}]
     return False
 
 def contraction(belief_base_cnf, proposition):
-    return to_cnf(belief_base_cnf & Not(proposition))
+    clauses = make_clauses(belief_base_cnf)
+    for clause in clauses:
+        if proposition in clause:
+            clause.remove(proposition)
+    no_empty_clauses = []
+    for clause in clauses:
+        if len(clause) != 0:
+            no_empty_clauses.append(clause)
+    return from_clause_to_belief_base(no_empty_clauses)
+
+def from_clause_to_belief_base(clauses):
+    result = [] 
+    for clause in clauses:
+        if len(clause) > 1:
+            result.append(Or(*clause))
+        else:
+            result.append(clause[0])
+    belief_base_cnf = to_cnf(And(*result))
+    return belief_base_cnf
 
 def expansion(belief_base_cnf, proposition):
     return to_cnf(belief_base_cnf & proposition)
 
 
 belief_base_cnf = make_belief_base()
-proposition = B
+proposition = ~D
 print(f"{belief_base_cnf} entails {proposition}")
 print(entails(belief_base_cnf, proposition))
 
 print(f"before contraction/expansion  {belief_base_cnf}")
-
 belief_base_cnf = contraction(belief_base_cnf, proposition)
 print(f"contraction                   {belief_base_cnf}")
 belief_base_cnf = expansion(belief_base_cnf, proposition)
