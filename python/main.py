@@ -5,6 +5,12 @@ from sympy.abc import A, B, D, R, P, S
 
 ############## The belief revision agent ##############
 
+def make_belief_base():
+    A, B, D = symbols('A B D')
+    belief_base = (Implies(~B , D) & (~A | B)) & ~D & (~R | P | S) & P
+    belief_base_cnf = to_cnf(belief_base)
+    return belief_base_cnf
+
 def make_clauses(belief_base_cnf):
     listed_beliefs_clauses = []
     if isinstance(belief_base_cnf, And):
@@ -118,13 +124,22 @@ def extensionality(belief_base_cnf, proposition1, proposition2):
     return f"proposition 1: {p1_cnf} and proposition 2: {p2_cnf} are not logically equivalent"
 
 
-############## AGM POSTULATES END ##############
+def testingAGM():
+    #Resetting the belief base and proposition
+    belief_base_cnf = make_belief_base()
+    proposition = D
+    assert(success(belief_base_cnf, proposition))
+    assert(inclusion(belief_base_cnf, proposition))
+    #Changing proposition to hit a case of vacuity that is interesting to test. The same proposition is used for consistency
+    proposition = ~D
+    assert(vacuity(belief_base_cnf, proposition))
+    assert(consistency(belief_base_cnf, proposition))
+    #Using two logically identical propositions to check for extensionality
+    proposition1 = A | B
+    proposition2 = B | A
+    assert(extensionality(belief_base_cnf, proposition1, proposition2))
 
-def make_belief_base():
-    A, B, D = symbols('A B D')
-    belief_base = (Implies(~B , D) & (~A | B)) & ~D & (~R | P | S) & P
-    belief_base_cnf = to_cnf(belief_base)
-    return belief_base_cnf
+############## AGM POSTULATES END ##############
 
 def main():
     ##Part 1
@@ -144,7 +159,7 @@ def main():
     print(f"after contraction   {belief_base_cnf}\n")
 
     ##Part 4
-    print("Expanding with the same proposition that was just contracted")
+    print("expanding with the same proposition that was just contracted")
     belief_base_cnf = expansion(belief_base_cnf, proposition)
     print(f"after expansion {belief_base_cnf}\n")
 
@@ -155,17 +170,7 @@ def main():
     print(f"after revision {belief_base_cnf}")
 
     ##AGM postulates
-    #Resetting the belief base
-    belief_base_cnf = make_belief_base()
-    assert(success(belief_base_cnf, proposition))
-    assert(inclusion(belief_base_cnf, proposition))
-    #Changing proposition to hit a case of vacuity that is interesting to test. The same proposition is used for consistency
-    proposition = ~D
-    assert(vacuity(belief_base_cnf, proposition))
-    assert(consistency(belief_base_cnf, proposition))
-    #Using two logically identical propositions to check for extensionality
-    proposition1 = A | B
-    proposition2 = B | A
-    assert(extensionality(belief_base_cnf, proposition1, proposition2))
+    testingAGM()
+    
 
 main()
