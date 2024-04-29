@@ -103,8 +103,9 @@ def vacuity(belief_base_cnf, proposition):
 
 def consistency(belief_base_cnf, proposition):
     #The sympy function satisfiable is a check for whether a belief is consistent
+    #It returns false if its variable is not consistent, otherwise it returns a set of boolean variables
     if satisfiable(to_cnf(proposition)):
-        return satisfiable(revision(belief_base_cnf,proposition))
+        return satisfiable(revision(belief_base_cnf,proposition)) != False
     else:
         return True
 
@@ -121,30 +122,50 @@ def extensionality(belief_base_cnf, proposition1, proposition2):
 
 def make_belief_base():
     A, B, D = symbols('A B D')
-    belief_base = (Implies(~B , D) & (~A | B)) & ~D & (~R | P | S)
+    belief_base = (Implies(~B , D) & (~A | B)) & ~D & (~R | P | S) & P
     belief_base_cnf = to_cnf(belief_base)
     return belief_base_cnf
 
 def main():
+    ##Part 1
     belief_base_cnf = make_belief_base()
+    print(f"the created belief base is {belief_base_cnf} in cnf form\n")
+
+    ##Part 2
+    propositionEntails = A | B
+    propositionNotEntails = Implies(S, R)
+    assert(entails(belief_base_cnf, propositionEntails))
+    assert(not entails(belief_base_cnf, propositionNotEntails))
+
+    ##Part 3
     proposition = ~D
-    print(f"{belief_base_cnf} entails {proposition}")
-    print(entails(belief_base_cnf, proposition))
-
-    print(f"before contraction/expansion  {belief_base_cnf}")
+    print(f"before contraction  {belief_base_cnf} with proposition {proposition}")
     belief_base_cnf = contraction(belief_base_cnf, proposition)
-    print(f"contraction                   {belief_base_cnf}")
-    belief_base_cnf = expansion(belief_base_cnf, proposition)
-    print(f"expansion                     {belief_base_cnf}")
+    print(f"after contraction   {belief_base_cnf}\n")
 
-    print("AGM now")
-    print(vacuity(belief_base_cnf, proposition))
+    ##Part 4
+    print("Expanding with the same proposition that was just contracted")
+    belief_base_cnf = expansion(belief_base_cnf, proposition)
+    print(f"after expansion {belief_base_cnf}\n")
+
+    ##Revision
+    proposition = D
+    print(f"before revision {belief_base_cnf} with proposition {proposition}")
+    belief_base_cnf = revision(belief_base_cnf, proposition)
+    print(f"after revision {belief_base_cnf}")
+
+    ##AGM postulates
+    #Resetting the belief base
+    belief_base_cnf = make_belief_base()
+    assert(success(belief_base_cnf, proposition))
+    assert(inclusion(belief_base_cnf, proposition))
+    #Changing proposition to hit a case of vacuity that is interesting to test. The same proposition is used for consistency
+    proposition = ~D
+    assert(vacuity(belief_base_cnf, proposition))
+    assert(consistency(belief_base_cnf, proposition))
+    #Using two logically identical propositions to check for extensionality
+    proposition1 = A | B
     proposition2 = B | A
-    print(extensionality(belief_base_cnf, proposition, proposition2))
+    assert(extensionality(belief_base_cnf, proposition1, proposition2))
 
 main()
-
-# & = AND
-# | = OR
-# ~ = NOT
-# >> = IMPLIES1
